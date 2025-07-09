@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Siebel Component Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: #f9fafb;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: #111827;
+        }
+
+        .dashboard-container {
+            display: flex;
+            width: 100%;
+            max-width: 1400px;
+            gap: 1.5rem;
+            transition: all 0.5s ease;
+        }
+
+        .dashboard {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            flex: 1;
+            transition: all 0.5s ease;
+        }
+
+        .dashboard.shrink {
+            flex: 0 0 70%;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            width: 300px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid #e5e7eb;
+        }
+
+        .beam {
+            height: 10px;
+            border-radius: 5px;
+            margin-top: 0.75rem;
+            transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out;
+        }
+
+        .footer {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-top: 0.75rem;
+        }
+
+        .details-pane {
+            flex: 0 0 30%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            display: none;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .details-pane.active {
+            display: flex;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            margin-right: 0.5rem;
+            background: #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .logs {
+            margin-top: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #f87171;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.25rem 0.75rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .export-btn {
+            background-color: #2563eb;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        .export-btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        .search-bar,
+        .filter-bar {
+            margin-bottom: 1.5rem;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: space-between;
+        }
+
+        .search-bar input,
+        .filter-bar select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            font-size: 1rem;
+        }
+
+        .email-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to right, #6366f1, #3b82f6);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            transition: background-color 0.3s ease;
+            border: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .email-btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        .email-btn:focus {
+            outline: none;
+        }
+
+        .search-filter-container {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            /* Optional: adjust the width to fit your layout */
+        }
+
+        .search-bar input,
+        .filter-bar select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            font-size: 1rem;
+        }
+
+
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1><i class="fas fa-server"></i> Siebel Component Monitoring Dashboard</h1>
+    <!-- Search and Filter Section -->
+    <div class="search-filter-container">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search Components" oninput="filterComponents()">
+        </div>
+        <div class="filter-bar">
+            <select id="statusFilter" onchange="filterComponents()">
+                <option value="">Filter by Status</option>
+                <option value="Online">Online</option>
+                <option value="Warning">Warning</option>
+                <option value="Offline">Offline</option>
+            </select>
+        </div>
+    </div>
+
+
+    <div class="dashboard-container">
+        <div class="dashboard" id="dashboard"></div>
+        <div class="details-pane" id="detailsPane">
+            <button class="close-btn" onclick="closeDetails()">Close</button>
+            <h2 id="detailTitle">Component Details</h2>
+            <div>
+                <span class="tab active" onclick="switchTab('logs', event)">Logs</span>
+                <span class="tab" onclick="switchTab('info', event)">Info</span>
+            </div>
+            <div class="logs" id="logContent"></div>
+            <canvas id="trendGraph" style="width: 100%; height: 200px; margin-top: 1rem;"></canvas>
+            <button class="export-btn" onclick="exportToPDF()">Export to PDF</button>
+            <br>
+            <button onclick="emailComponentDetails()" class="email-btn">
+                📧 Email Report
+            </button>
+            <br>
+            <button onclick="emailComponentDetails()" class="email-btn">
+                Notify in JIRA
+            </button>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const components = [
+            "Business Integration Batch Manager",
+            "Business Integration Manager",
+            "Call Center Object Manager (ENU)",
+            "Custom Application Object Manager (ENU)",
+            "Data Manager",
+            "Workflow Process Manager",
+            "EAI Object Manager",
+            "Email Manager",
+            "Mobile Web Client Object Manager",
+            "Siebel Server"
+        ];
+
+        const statusMap = {
+            Online: { color: '#10b981', width: '100%', icon: 'fas fa-check-circle' },
+            Warning: { color: '#facc15', width: '60%', icon: 'fas fa-exclamation-circle' },
+            Offline: { color: '#ef4444', width: '25%', icon: 'fas fa-times-circle' },
+        };
+
+        const dummyLogs = [
+            "Failed to connect to database.",
+            "Component restarted successfully.",
+            "Health check passed.",
+            "Configuration mismatch detected.",
+            "No recent activity detected.",
+            "Unexpected termination of process.",
+        ];
+
+        function getRandomStatus() {
+            const keys = Object.keys(statusMap);
+            return keys[Math.floor(Math.random() * keys.length)];
+        }
+
+        function updateStatus(card, status) {
+            const dot = card.querySelector('.status-dot');
+            const beam = card.querySelector('.beam');
+            const label = card.querySelector('.status-label');
+            const icon = card.querySelector('.status-icon');
+
+            dot.style.backgroundColor = statusMap[status].color;
+            beam.style.backgroundColor = statusMap[status].color;
+            beam.style.width = statusMap[status].width;
+            label.textContent = status;
+            icon.className = `status-icon ${statusMap[status].icon}`;
+            icon.style.color = statusMap[status].color;
+
+            card.dataset.status = status;
+
+            // 🔁 Reapply the filter on status change
+            filterComponents();
+        }
+
+        function emailComponentDetails() {
+            const componentName = document.getElementById('detailTitle').textContent;
+            const timestamp = new Date().toLocaleString();
+            const pdfLink = window.location.origin + `/exports/${componentName}_Details.pdf`; // adjust path accordingly
+
+            const subject = encodeURIComponent(`Siebel Component Report: ${componentName}`);
+            const body = encodeURIComponent(
+                `Hi,\n\nPlease find below the report for the component: ${componentName}\n\n` +
+                `📅 Generated On: ${timestamp}\n` +
+                `📄 View/Download PDF Report: ${pdfLink}\n\n` +
+                `Thanks,\nYour Monitoring Dashboard`
+            );
+
+            // Open Outlook (or default mail client)
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        }
+
+
+        function showDetails(name) {
+            const pane = document.getElementById('detailsPane');
+            const dashboard = document.querySelector('.dashboard');
+
+            // Re-trigger fade-in animation
+            pane.classList.remove('fade-in');
+            void pane.offsetWidth;
+            pane.classList.add('fade-in');
+
+            pane.classList.add('active');
+            dashboard.classList.add('shrink');
+            document.getElementById('detailTitle').textContent = name;
+
+            const logs = Array.from({ length: 5 }, () => dummyLogs[Math.floor(Math.random() * dummyLogs.length)]);
+            document.getElementById('logContent').innerHTML = logs.map(log => `<div>• ${log}</div>`).join('');
+
+            renderGraph();
+        }
+
+        function closeDetails() {
+            document.getElementById('detailsPane').classList.remove('active', 'fade-in');
+            document.querySelector('.dashboard').classList.remove('shrink');
+        }
+
+        function switchTab(tab, event) {
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            if (tab === 'logs') {
+                document.getElementById('logContent').innerHTML = dummyLogs.map(log => `<div>• ${log}</div>`).join('');
+            } else {
+                document.getElementById('logContent').innerHTML = `
+          <div>Version: 23.2.1</div>
+          <div>Last Checked: ${new Date().toLocaleString()}</div>
+          <div>Uptime: ${Math.floor(Math.random() * 1000)} hours</div>
+        `;
+            }
+        }
+
+        function createCard(name, status) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.status = status; // Store the status for filtering
+            card.innerHTML = `
+        <div class="header">
+          <h3 style="margin:0; font-size: 1.05rem">${name}</h3>
+          <div class="status-dot"></div>
+        </div>
+        <div class="footer">
+          <i class="status-icon"></i>
+          <span>Status: <span class="status-label"></span></span>
+        </div>
+        <div class="beam"></div>
+      `;
+            updateStatus(card, status);
+            card.addEventListener('click', () => showDetails(name));
+            document.getElementById("dashboard").appendChild(card);
+
+            setInterval(() => {
+                updateStatus(card, getRandomStatus());
+            }, 4000 + Math.random() * 3000);
+        }
+
+        components.forEach(name => {
+            const status = getRandomStatus();
+            createCard(name, status);
+        });
+
+        function renderGraph() {
+            const ctx = document.getElementById('trendGraph').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                    datasets: [{
+                        label: 'Component Status',
+                        data: [12, 19, 3, 5, 2],
+                        fill: false,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const marginLeft = 15;
+            let y = 20;
+
+            // Title
+            const componentName = document.getElementById('detailTitle').textContent;
+            doc.setFontSize(18);
+            doc.setTextColor(33, 37, 41);
+            doc.text(`Component Report: ${componentName}`, marginLeft, y);
+            y += 10;
+
+            // Divider
+            doc.setLineWidth(0.5);
+            doc.line(marginLeft, y, 195, y);
+            y += 10;
+
+            // Logs Section
+            doc.setFontSize(14);
+            doc.setTextColor(52, 58, 64);
+            doc.text("🔍 Logs", marginLeft, y);
+            y += 8;
+
+            const logsHTML = document.getElementById('logContent').innerHTML;
+            const logLines = logsHTML
+                .replace(/<div>/g, '')
+                .replace(/<\/div>/g, '')
+                .split('•')
+                .map(line => line.trim())
+                .filter(Boolean);
+
+            doc.setFontSize(11);
+            doc.setTextColor(66, 66, 66);
+            logLines.forEach((log, index) => {
+                const lines = doc.splitTextToSize(`• ${log}`, 180);
+                doc.text(lines, marginLeft, y);
+                y += lines.length * 6;
+            });
+
+            y += 5;
+
+            // Trend Graph Section
+            doc.setFontSize(14);
+            doc.setTextColor(52, 58, 64);
+            doc.text("📈 Trend Graph", marginLeft, y);
+            y += 8;
+
+            const graphCanvas = document.querySelector('canvas');
+            if (graphCanvas) {
+                const graphDataUrl = graphCanvas.toDataURL('image/png');
+                const graphHeight = 70;
+                const graphWidth = 180;
+                if (y + graphHeight > 280) {
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.addImage(graphDataUrl, 'PNG', marginLeft, y, graphWidth, graphHeight);
+                y += graphHeight + 10;
+            }
+
+            // Footer
+            doc.setFontSize(10);
+            doc.setTextColor(120, 120, 120);
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, marginLeft, 290);
+
+            doc.save(`${componentName}_Details.pdf`);
+        }
+
+
+        function filterComponents() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                const cardName = card.querySelector('h3').textContent.toLowerCase();
+                const cardStatus = card.dataset.status;
+                const matchesSearch = cardName.includes(searchText);
+                const matchesStatus = statusFilter ? cardStatus === statusFilter : true;
+
+                if (matchesSearch && matchesStatus) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
